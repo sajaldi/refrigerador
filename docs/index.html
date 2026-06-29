@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Refrigerador — Configuración</title>
+<style>
+  :root { --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --accent: #38bdf8; --accent2: #818cf8; --text: #f1f5f9; --muted: #94a3b8; --green: #4ade80; --orange: #fb923c; --red: #f87171; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+  .container { max-width: 640px; width: 100%; }
+  header { text-align: center; margin-bottom: 2rem; }
+  header h1 { font-size: 1.75rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  header p { color: var(--muted); margin-top: .25rem; font-size: .9rem; }
+  .card { background: var(--surface); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid rgba(255,255,255,.05); }
+  .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--accent); display: flex; align-items: center; gap: .5rem; }
+  .card h2 .icon { font-size: 1.2rem; }
+  .field { margin-bottom: 1.25rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; font-weight: 500; margin-bottom: .4rem; }
+  .field label .val { color: var(--accent); font-weight: 700; font-size: 1rem; background: var(--bg); padding: .15rem .6rem; border-radius: .4rem; min-width: 3rem; text-align: center; }
+  .field .hint { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: var(--surface2); outline: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--accent); }
+  input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 3px solid var(--surface); box-shadow: 0 0 0 2px var(--accent); }
+  .field-row { display: flex; gap: .75rem; }
+  .field-row .field { flex: 1; }
+  .timeline { display: flex; height: 32px; border-radius: 8px; overflow: hidden; margin: 1rem 0 .5rem; }
+  .timeline .segment { display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 600; color: #fff; transition: width .3s; }
+  .timeline .cool { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+  .timeline .defrost { background: linear-gradient(135deg, #dc2626, #ef4444); }
+  .timeline .startup { background: linear-gradient(135deg, #6b7280, #9ca3af); }
+  .legend { display: flex; gap: 1rem; justify-content: center; font-size: .75rem; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: .35rem; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.cool { background: #3b82f6; }
+  .dot.defrost { background: #ef4444; }
+  .dot.startup { background: #9ca3af; }
+  .actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+  .btn { flex: 1; padding: .75rem 1.25rem; border: none; border-radius: .6rem; font-size: .9rem; font-weight: 600; cursor: pointer; transition: all .2s; text-decoration: none; text-align: center; min-width: 140px; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(56,189,248,.3); }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-secondary:hover { background: #475569; }
+  .btn-success { background: linear-gradient(135deg, #22c55e, #4ade80); color: #fff; }
+  .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(34,197,94,.3); }
+  .toast { display: none; position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid rgba(255,255,255,.1); padding: .75rem 1.5rem; border-radius: .6rem; font-size: .85rem; box-shadow: 0 8px 30px rgba(0,0,0,.4); z-index: 100; animation: fadeIn .3s; }
+  .toast.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  .loading { text-align: center; padding: 2rem; color: var(--muted); }
+  .loading .spinner { width: 32px; height: 32px; border: 3px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto .75rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-state { text-align: center; padding: 2rem; color: var(--red); }
+  .error-state .icon { font-size: 2rem; margin-bottom: .5rem; }
+  .status-badge { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+  .status-badge.active { background: rgba(74,222,128,.15); color: var(--green); }
+  .status-badge.info { background: rgba(56,189,248,.15); color: var(--accent); }
+  .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; margin-top: 1rem; }
+  .summary-item { background: var(--bg); border-radius: .6rem; padding: .75rem; text-align: center; }
+  .summary-item .number { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  .summary-item .label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: .15rem; }
+  .preview-json { background: var(--bg); border-radius: .6rem; padding: 1rem; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: .8rem; line-height: 1.5; color: var(--muted); margin-top: 1rem; overflow-x: auto; white-space: pre; border: 1px solid rgba(255,255,255,.05); }
+  .preview-json .key { color: var(--accent); }
+  .preview-json .num { color: var(--green); }
+  .preview-json .punc { color: var(--muted); }
+  @media (max-width: 500px) { .summary { grid-template-columns: 1fr; } .actions { flex-direction: column; } body { padding: 1rem .75rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>❄️ Refrigerador GE</h1>
+    <p>Configuración remota del ciclo automático</p>
+  </header>
+
+  <div id="loading" class="card loading">
+    <div class="spinner"></div>
+    Cargando configuración actual...
+  </div>
+
+  <div id="error" class="card error-state" style="display:none">
+    <div class="icon">⚠️</div>
+    <p><strong>Error al cargar la configuración</strong></p>
+    <p id="errorMsg" style="font-size:.85rem;margin-top:.25rem"></p>
+  </div>
+
+  <div id="mainContent" style="display:none">
+    <div class="card">
+      <h2><span class="icon">⏱️</span> Tiempos del Ciclo</h2>
+
+      <div class="field">
+        <label>Enfriamiento <span class="val" id="coolDisplay">7h 55m</span></label>
+        <div class="field-row">
+          <div class="field">
+            <label style="font-size:.75rem;color:var(--muted)">Horas <span class="val" id="coolHoursDisplay">7</span></label>
+            <input type="range" id="coolHours" min="0" max="23" value="7" step="1">
+          </div>
+          <div class="field">
+            <label style="font-size:.75rem;color:var(--muted)">Minutos <span class="val" id="coolMinsDisplay">55</span></label>
+            <input type="range" id="coolMins" min="0" max="59" value="55" step="1">
+          </div>
+        </div>
+        <div class="hint">Tiempo total de enfriamiento antes del deshielo</div>
+      </div>
+
+      <div class="field">
+        <label>Deshielo <span class="val" id="defrostDisplay">5 min</span></label>
+        <input type="range" id="defrostMins" min="1" max="60" value="5" step="1">
+        <div class="hint">Duración de la resistencia de deshielo</div>
+      </div>
+
+      <div class="field">
+        <label>Arranque inicial <span class="val" id="startupDisplay">5 s</span></label>
+        <input type="range" id="startupSecs" min="1" max="30" value="5" step="1">
+        <div class="hint">Espera al iniciar antes del primer ciclo</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">📊</span> Vista del Ciclo</h2>
+      <div class="timeline" id="timeline">
+        <div class="segment startup" id="segStartup" style="width:0%">ARRANQUE</div>
+        <div class="segment cool" id="segCool" style="width:0%">ENFRIANDO</div>
+        <div class="segment defrost" id="segDefrost" style="width:0%">DESHIELO</div>
+      </div>
+      <div class="legend">
+        <span><span class="dot cool"></span>Enfriamiento</span>
+        <span><span class="dot defrost"></span>Deshielo</span>
+        <span><span class="dot startup"></span>Arranque</span>
+      </div>
+      <div class="summary">
+        <div class="summary-item"><div class="number" id="totalHours">8</div><div class="label">Horas totales</div></div>
+        <div class="summary-item"><div class="number" id="cycleCount">3</div><div class="label">Ciclos por día</div></div>
+        <div class="summary-item"><div class="number" id="defrostPerDay">0</div><div class="label">Deshielos por día</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">💾</span> Guardar Cambios</h2>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Los cambios se guardan editando el archivo directamente en GitHub.</p>
+      <div class="actions">
+        <button class="btn btn-primary" id="saveBtn">✏️ Editar en GitHub</button>
+        <button class="btn btn-secondary" id="copyBtn">📋 Copiar JSON</button>
+      </div>
+      <div class="preview-json" id="jsonPreview">{
+  <span class="punc">"</span><span class="key">coolingMinutes</span><span class="punc">"</span>: <span class="num">475</span>,
+  <span class="punc">"</span><span class="key">defrostMinutes</span><span class="punc">"</span>: <span class="num">5</span>,
+  <span class="punc">"</span><span class="key">startupSeconds</span><span class="punc">"</span>: <span class="num">5</span>
+}</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG_URL = 'https://raw.githubusercontent.com/sajaldi/refrigerador/main/refrigeradora_config.json';
+const EDIT_URL = 'https://github.com/sajaldi/refrigerador/edit/main/refrigeradora_config.json';
+
+let currentConfig = { coolingMinutes: 475, defrostMinutes: 5, startupSeconds: 5 };
+
+const $ = id => document.getElementById(id);
+
+function showToast(msg, duration = 3000) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function formatCool(h, m) {
+  if (h === 0) return m + ' min';
+  return h + 'h ' + m + 'm';
+}
+
+function updateUI() {
+  const h = parseInt($('coolHours').value);
+  const m = parseInt($('coolMins').value);
+  const d = parseInt($('defrostMins').value);
+  const s = parseInt($('startupSecs').value);
+
+  $('coolDisplay').textContent = formatCool(h, m);
+  $('coolHoursDisplay').textContent = h;
+  $('coolMinsDisplay').textContent = m;
+  $('defrostDisplay').textContent = d + ' min';
+  $('startupDisplay').textContent = s + ' s';
+
+  const totalMin = h * 60 + m + d;
+  const totalHours = (totalMin / 60);
+  $('totalHours').textContent = totalHours.toFixed(1);
+
+  const cyclesPerDay = 1440 / totalMin;
+  $('cycleCount').textContent = cyclesPerDay.toFixed(1);
+
+  const defrostsPerDay = cyclesPerDay;
+  $('defrostPerDay').textContent = defrostsPerDay.toFixed(1);
+
+  const totalSec = totalMin * 60 + s;
+  const startupPct = Math.max(0.5, (s / totalSec) * 100);
+  const coolPct = Math.max(0.5, ((h * 60 + m) * 60 / totalSec) * 100);
+  const defrostPct = Math.max(0.5, (d * 60 / totalSec) * 100);
+  const scale = 100 / (startupPct + coolPct + defrostPct);
+
+  $('segStartup').style.width = (startupPct * scale) + '%';
+  $('segCool').style.width = (coolPct * scale) + '%';
+  $('segDefrost').style.width = (defrostPct * scale) + '%';
+
+  currentConfig.coolingMinutes = h * 60 + m;
+  currentConfig.defrostMinutes = d;
+  currentConfig.startupSeconds = s;
+
+  updateJSONPreview();
+}
+
+function updateJSONPreview() {
+  const c = currentConfig;
+  const json = '{\n  "coolingMinutes": ' + c.coolingMinutes + ',\n  "defrostMinutes": ' + c.defrostMinutes + ',\n  "startupSeconds": ' + c.startupSeconds + '\n}';
+  $('jsonPreview').innerHTML = '{\n  <span class="punc">"</span><span class="key">coolingMinutes</span><span class="punc">"</span>: <span class="num">' + c.coolingMinutes + '</span>,\n  <span class="punc">"</span><span class="key">defrostMinutes</span><span class="punc">"</span>: <span class="num">' + c.defrostMinutes + '</span>,\n  <span class="punc">"</span><span class="key">startupSeconds</span><span class="punc">"</span>: <span class="num">' + c.startupSeconds + '</span>\n}';
+}
+
+async function loadConfig() {
+  try {
+    $('loading').style.display = 'block';
+    $('error').style.display = 'none';
+    $('mainContent').style.display = 'none';
+
+    const resp = await fetch(CONFIG_URL + '?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+
+    const totalMin = data.coolingMinutes || 475;
+    const hours = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+
+    $('coolHours').value = Math.min(Math.max(hours, 0), 23);
+    $('coolMins').value = Math.min(Math.max(mins, 0), 59);
+    $('defrostMins').value = Math.min(Math.max(data.defrostMinutes || 5, 1), 60);
+    $('startupSecs').value = Math.min(Math.max(data.startupSeconds || 5, 1), 30);
+
+    currentConfig = {
+      coolingMinutes: totalMin,
+      defrostMinutes: data.defrostMinutes || 5,
+      startupSeconds: data.startupSeconds || 5
+    };
+
+    $('loading').style.display = 'none';
+    $('mainContent').style.display = 'block';
+    updateUI();
+  } catch (err) {
+    $('loading').style.display = 'none';
+    $('error').style.display = 'block';
+    $('errorMsg').textContent = 'No se pudo leer ' + CONFIG_URL + ' — ' + err.message;
+  }
+}
+
+$('saveBtn').addEventListener('click', () => {
+  const json = JSON.stringify(currentConfig, null, 2);
+  const encoded = encodeURIComponent(json);
+  window.open(EDIT_URL, '_blank');
+  showToast('Editando en GitHub — pega el JSON y confirma', 4000);
+});
+
+$('copyBtn').addEventListener('click', () => {
+  const json = JSON.stringify(currentConfig, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    showToast('✅ JSON copiado al portapapeles');
+  }).catch(() => {
+    showToast('No se pudo copiar, selecciona el JSON manualmente');
+  });
+});
+
+$('coolHours').addEventListener('input', updateUI);
+$('coolMins').addEventListener('input', updateUI);
+$('defrostMins').addEventListener('input', updateUI);
+$('startupSecs').addEventListener('input', updateUI);
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    $('saveBtn').click();
+  }
+});
+
+loadConfig();
+</script>
+</body>
+</html>
