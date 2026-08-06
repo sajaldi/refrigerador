@@ -1,5 +1,5 @@
 {
-  "coolingMinutes": 40,
-  "defrostMinutes": 5,
-  "startupSeconds": 5
+  "coolingMinutes": 300,
+  "defrostMinutes": 15,
+  "startupSeconds": 300
 }
